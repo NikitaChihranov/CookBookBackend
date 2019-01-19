@@ -17,7 +17,6 @@ let controller = {};
 controller.findAll = async(req, res, next) => {
     try{
         let recipes = await Recipe.find({}).sort({dateOfCreation: 'asc'});
-        console.log(recipes);
         res.status(200).json(recipes);
     }catch(e){
         next(new ControllerError(e.message, 400))
@@ -50,9 +49,7 @@ controller.uploadPhoto = async(req, res, next) => {
         let recipe = await Recipe.findOne({_id: req.params.id});
         upload(req, res, (err) => {
             if(err) console.log(err);
-            console.log(req.file);
-            let photo1 = req.file.filename;
-            recipe.photo = photo1;
+            recipe.photo = req.file.filename;
             recipe.save();
             res.status(200).json(recipe);
         })
@@ -63,10 +60,9 @@ controller.uploadPhoto = async(req, res, next) => {
 controller.update = async (req, res, next) => {
     try {
         let recipeWithPhotos = await Recipe.findOne({name: req.params.name});
-        let photo = recipeWithPhotos.photo;
-        fs.unlink('./photos/' + photo, (err) => (err));
+        let photo1 = recipeWithPhotos.photo;
+        fs.unlink('./photos/' + photo1, (err) => (err));
         let recipe = await Recipe.findOneAndUpdate(req.params.name, req.body, {new: true});
-        console.log(recipe);
         res.status(200).json(recipe);
     }catch (e) {
         next(new ControllerError(e.message, 400));
