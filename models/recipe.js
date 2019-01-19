@@ -7,7 +7,10 @@ let RecipeSchema = new Schema({
     photo: String,
     text: String,
     author: String,
-    dateOfCreation: new Date()
+    dateOfCreation: {
+        type: Date,
+        default: new Date()
+    }
 });
 
 module.exports = mongoose.model('About', RecipeSchema);

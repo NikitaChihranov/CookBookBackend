@@ -1,17 +1,17 @@
-let express = require('express');
-let path = require('path');
-let IndexRouter = require('./routes/index');
-let cors = require('cors');
-let ControllerError = require('./errors/controllerError');
+const express = require('express');
+const path = require('path');
+const IndexRouter = require('./routes/index');
+const cors = require('cors');
+const ControllerError = require('./errors/controllerError');
 
-let mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 mongoose.connect('mongodb://localhost:27017/cookBook', {useNewUrlParser: true});
 try {
-    let app = express();
+    const app = express();
     app.use(express.json());
     app.use(express.urlencoded({extended: true}));
-    app.use(cors({origin: true}, {withCredentials: true}));
+    app.use(cors({origin: true}));
     app.use(express.static(path.join(__dirname, 'public')));
     app.use(IndexRouter);
     app.use((req, res, next) => {

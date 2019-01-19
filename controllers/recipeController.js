@@ -16,7 +16,8 @@ let upload = multer({
 let controller = {};
 controller.findAll = async(req, res, next) => {
     try{
-        let recipes = await Recipe.find({});
+        let recipes = await Recipe.find({}).sort({dateOfCreation: 'desc'});
+        console.log(recipes);
         res.status(200).json(recipes);
     }catch(e){
         next(new ControllerError(e.message, 400))
@@ -58,5 +59,52 @@ controller.uploadPhoto = async(req, res, next) => {
         next(new ControllerError(e.message, 400))
     }
 };
-
+controller.update = async (req, res, next) => {
+    try {
+        let recipeWithPhotos = await Recipe.findOne({name: req.params.name});
+        let photo = recipeWithPhotos.photo;
+        fs.unlink('./photos/' + photo, (err) => (err));
+        let recipe = await Recipe.findOneAndUpdate(req.params.name, req.body, {new: true});
+        console.log(recipe);
+        res.status(200).json(recipe);
+    }catch (e) {
+        next(new ControllerError(e.message, 400));
+    }
+};
+controller.updatePhoto = async (req, res, next) => {
+    try {
+        let recipeToUpdate = await Recipe.findOne({_id: req.params.id});
+        upload(req, res, (err) => {
+            if (err) console.log(err);
+            recipeToUpdate.photo = req.file.filename;
+            recipeToUpdate.save();
+            res.status(200).json(recipeToUpdate);
+        });
+    }catch(e) {
+        next(new ControllerError(e.message, 400));
+    }
+};
+controller.delete = async (req, res, next) => {
+    try{
+        let recipeWithPhoto = await Recipe.findOne({name: req.params.name});
+        fs.unlink('./photos/' + recipeWithPhoto.photo, (err) => (err));
+        let recipe = await Recipe.findOneAndRemove({_id: req.params.id});
+        res.status(200).json(recipe);
+    }catch (e) {
+        next(new ControllerError(e.message, 400));
+    }
+};
+controller.deleteAll = async (req, res, next) => {
+    try{
+        let recipesWithPhotos = await Recipe.find({});
+        let recipes = await Recipe.deleteMany({}, (err) => {});
+        for(let recipe of recipesWithPhotos) {
+            fs.unlink('./photos/' + recipe.photo, (err) => (err));
+        }
+        res.status(200).json(recipes);
+        console.log(recipes);
+    }catch (e) {
+        next(new ControllerError(e.message, 400));
+    }
+};
 module.exports = controller;
