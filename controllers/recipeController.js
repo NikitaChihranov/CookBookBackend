@@ -16,7 +16,7 @@ let upload = multer({
 let controller = {};
 controller.findAll = async(req, res, next) => {
     try{
-        let recipes = await Recipe.find({}).sort({dateOfCreation: 'desc'});
+        let recipes = await Recipe.find({}).sort({dateOfCreation: 'asc'});
         console.log(recipes);
         res.status(200).json(recipes);
     }catch(e){
@@ -50,8 +50,9 @@ controller.uploadPhoto = async(req, res, next) => {
         let recipe = await Recipe.findOne({_id: req.params.id});
         upload(req, res, (err) => {
             if(err) console.log(err);
-            let photo = req.file.filename;
-            recipe.photo = photo;
+            console.log(req.file);
+            let photo1 = req.file.filename;
+            recipe.photo = photo1;
             recipe.save();
             res.status(200).json(recipe);
         })
