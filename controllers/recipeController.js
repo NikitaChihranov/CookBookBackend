@@ -42,8 +42,6 @@ controller.viewAllVersions = async(req, res, next) => {
             let recipe = await Recipe.findOne({_id: id});
             recipes.push(recipe);
         }
-        console.log(ids);
-        console.log(recipes);
         res.status(200).json(recipes);
     }catch(e){
         next(new ControllerError(e.message, 400))
@@ -53,7 +51,11 @@ controller.findByName = async(req, res, next) => {
     try{
         let name = req.params.name;
         let recipe = await Recipe.findOne({name});
-        res.status(200).json(recipe);
+        let Allrecipe = await AllRecipes.findOne({history: recipe._id});
+        let length = Allrecipe.history.length;
+        let id = Allrecipe.history[length-1];
+        let recipe1 = await Recipe.findOne({_id: id});
+        res.status(200).json(recipe1);
     }catch(e){
         next(new ControllerError(e.message, 400))
     }
@@ -109,12 +111,12 @@ controller.update = async (req, res, next) => {
 };
 controller.updatePhoto = async (req, res, next) => {
     try {
-        let recipeToUpdate = await Recipe.findOne({_id: req.params.id});
+        let recipe = await Recipe.findOne({_id: req.params.id});
         upload(req, res, (err) => {
             if (err) console.log(err);
-            recipeToUpdate.photo = req.file.filename;
-            recipeToUpdate.save();
-            res.status(200).json(recipeToUpdate);
+            recipe.photo = req.file.filename;
+            recipe.save();
+            res.status(200).json(recipe);
         });
     }catch(e) {
         next(new ControllerError(e.message, 400));
@@ -123,7 +125,9 @@ controller.updatePhoto = async (req, res, next) => {
 controller.delete = async (req, res, next) => {
     try{
         let recipeWithPhoto = await Recipe.findOne({name: req.params.name});
-        fs.unlink('./photos/' + recipeWithPhoto.photo, (err) => (err));
+        let id = recipeWithPhoto._id;
+        fs.unlink('./public/photos/' + recipeWithPhoto.photo, (err) => (err));
+        await AllRecipes.findOneAndRemove({history: id});
         let recipe = await Recipe.findOneAndRemove({name: req.params.name});
         res.status(200).json(recipe);
     }catch (e) {
