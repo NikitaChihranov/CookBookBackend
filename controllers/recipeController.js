@@ -1,5 +1,6 @@
 let ControllerError = require('../errors/controllerError');
 let Recipe = require('../models/recipe');
+let AllRecipes = require('../models/AllRecipes');
 let fs = require('fs');
 let multer = require('multer');
 let path = require('path');
@@ -16,7 +17,33 @@ let upload = multer({
 let controller = {};
 controller.findAll = async(req, res, next) => {
     try{
-        let recipes = await Recipe.find({}).sort({dateOfCreation: 'asc'});
+        let recipes = [];
+        let recipesToAdd = await AllRecipes.find({});
+        for(let recipe of recipesToAdd ){
+            let length = recipe.history.length;
+            let id = recipe.history[length-1];
+            let recipe1 = await Recipe.findOne({_id: id});
+            recipes.push(recipe1);
+        }
+        res.status(200).json(recipes);
+    }catch(e){
+        next(new ControllerError(e.message, 400))
+    }
+};
+controller.viewAllVersions = async(req, res, next) => {
+    try{
+        let recipes = [];
+        let ids = [];
+        let Allrecipes = await AllRecipes.findOne({history: req.params.id});
+        for(let recipe of Allrecipes.history){
+            ids.push(recipe);
+        }
+        for(let id of ids){
+            let recipe = await Recipe.findOne({_id: id});
+            recipes.push(recipe);
+        }
+        console.log(ids);
+        console.log(recipes);
         res.status(200).json(recipes);
     }catch(e){
         next(new ControllerError(e.message, 400))
@@ -37,7 +64,10 @@ controller.create = async(req, res, next) => {
         let alreadyExists = await Recipe.findOne({name});
         if(alreadyExists) console.log('Recipe with such name already exists');
         else{
-            let recipe = await Recipe.create(req.body);
+            let createdRecipe = await Recipe.create(req.body);
+            let recipe = await AllRecipes.create({});
+            recipe.history.push(createdRecipe);
+            recipe.save();
             res.status(200).json(recipe);
         }
     }catch(e){
@@ -46,13 +76,14 @@ controller.create = async(req, res, next) => {
 };
 controller.uploadPhoto = async(req, res, next) => {
     try{
-
-        let recipe = await Recipe.findOne({_id: req.params.id});
+        let recipeAll = await AllRecipes.findOne({_id: req.params.id});
+        let recipe = await Recipe.findOne({_id: recipeAll.history[0]});
         upload(req, res, (err) => {
             if(err) console.log(err);
-            if(req.file.filename) {
+            if(req.file) {
                 recipe.photo = req.file.filename;
                 recipe.save();
+                recipeAll.save();
                 res.status(200).json(recipe);
             }
             else{
@@ -66,9 +97,11 @@ controller.uploadPhoto = async(req, res, next) => {
 controller.update = async (req, res, next) => {
     try {
         let recipeWithPhotos = await Recipe.findOne({name: req.params.name});
-        let photo1 = recipeWithPhotos.photo;
-        fs.unlink('./photos/' + photo1, (err) => (err));
-        let recipe = await Recipe.findOneAndUpdate(req.params.name, req.body, {new: true});
+        console.log(recipeWithPhotos);
+        let recipe = await Recipe.create(req.body);
+        let allrecipe = await AllRecipes.findOne({history: recipeWithPhotos._id});
+        allrecipe.history.push(recipe._id);
+        allrecipe.save();
         res.status(200).json(recipe);
     }catch (e) {
         next(new ControllerError(e.message, 400));
@@ -91,7 +124,7 @@ controller.delete = async (req, res, next) => {
     try{
         let recipeWithPhoto = await Recipe.findOne({name: req.params.name});
         fs.unlink('./photos/' + recipeWithPhoto.photo, (err) => (err));
-        let recipe = await Recipe.findOneAndRemove({_id: req.params.id});
+        let recipe = await Recipe.findOneAndRemove({name: req.params.name});
         res.status(200).json(recipe);
     }catch (e) {
         next(new ControllerError(e.message, 400));
@@ -100,12 +133,14 @@ controller.delete = async (req, res, next) => {
 controller.deleteAll = async (req, res, next) => {
     try{
         let recipesWithPhotos = await Recipe.find({});
+        await AllRecipes.deleteMany({}, (err) => {});
         let recipes = await Recipe.deleteMany({}, (err) => {});
         for(let recipe of recipesWithPhotos) {
-            fs.unlink('./photos/' + recipe.photo, (err) => (err));
+            if(recipe.photo!=='') {
+                fs.unlink('./public/photos/' + recipe.photo, (err) => (err));
+            }
         }
         res.status(200).json(recipes);
-        console.log(recipes);
     }catch (e) {
         next(new ControllerError(e.message, 400));
     }

@@ -9,8 +9,8 @@ let RecipeSchema = new Schema({
     author: String,
     dateOfCreation: {
         type: Date,
-        default: new Date()
+        default: Date.now()
     }
 });
 
-module.exports = mongoose.model('About', RecipeSchema);
+module.exports = mongoose.model('Recipe', RecipeSchema);
