@@ -24,7 +24,7 @@ controller.findAll = async(req, res, next) => {
 };
 controller.findByName = async(req, res, next) => {
     try{
-        let name = req.body.name;
+        let name = req.params.name;
         let recipe = await Recipe.findOne({name});
         res.status(200).json(recipe);
     }catch(e){
@@ -46,12 +46,18 @@ controller.create = async(req, res, next) => {
 };
 controller.uploadPhoto = async(req, res, next) => {
     try{
+
         let recipe = await Recipe.findOne({_id: req.params.id});
         upload(req, res, (err) => {
             if(err) console.log(err);
-            recipe.photo = req.file.filename;
-            recipe.save();
-            res.status(200).json(recipe);
+            if(req.file.filename) {
+                recipe.photo = req.file.filename;
+                recipe.save();
+                res.status(200).json(recipe);
+            }
+            else{
+                next();
+            }
         })
     }catch(e){
         next(new ControllerError(e.message, 400))
