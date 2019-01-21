@@ -9,7 +9,7 @@ let RecipeSchema = new Schema({
     author: String,
     dateOfCreation: {
         type: Date,
-        default: Date.now()
+        default: Date.now
     }
 });
 

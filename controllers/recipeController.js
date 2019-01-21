@@ -38,10 +38,12 @@ controller.viewAllVersions = async(req, res, next) => {
         for(let recipe of Allrecipes.history){
             ids.push(recipe);
         }
+        console.log(ids);
         for(let id of ids){
             let recipe = await Recipe.findOne({_id: id});
             recipes.push(recipe);
         }
+        console.log(recipes);
         res.status(200).json(recipes);
     }catch(e){
         next(new ControllerError(e.message, 400))
@@ -69,7 +71,8 @@ controller.create = async(req, res, next) => {
             let createdRecipe = await Recipe.create(req.body);
             let recipe = await AllRecipes.create({});
             recipe.history.push(createdRecipe);
-            recipe.save();
+
+            recipe.save();console.log(recipe);
             res.status(200).json(recipe);
         }
     }catch(e){
@@ -99,7 +102,6 @@ controller.uploadPhoto = async(req, res, next) => {
 controller.update = async (req, res, next) => {
     try {
         let recipeWithPhotos = await Recipe.findOne({name: req.params.name});
-        console.log(recipeWithPhotos);
         let recipe = await Recipe.create(req.body);
         let allrecipe = await AllRecipes.findOne({history: recipeWithPhotos._id});
         allrecipe.history.push(recipe._id);
