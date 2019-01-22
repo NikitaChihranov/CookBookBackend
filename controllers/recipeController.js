@@ -129,8 +129,11 @@ controller.delete = async (req, res, next) => {
         let recipeWithPhoto = await Recipe.findOne({name: req.params.name});
         let id = recipeWithPhoto._id;
         fs.unlink('./public/photos/' + recipeWithPhoto.photo, (err) => (err));
+        let allrecipe = await AllRecipes.findOne({history: id});
+        for(let item of allrecipe.history){
+            await Recipe.findOneAndRemove({_id: item});
+        }
         await AllRecipes.findOneAndRemove({history: id});
-        let recipe = await Recipe.findOneAndRemove({name: req.params.name});
         res.status(200).json(recipe);
     }catch (e) {
         next(new ControllerError(e.message, 400));

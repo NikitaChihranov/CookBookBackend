@@ -2,7 +2,10 @@ let mongoose = require('mongoose');
 let Schema = mongoose.Schema;
 
 let RecipeSchema = new Schema({
-    name: String,
+    name: {
+        type: String,
+        required: true
+    },
     ingredients: String,
     photo: String,
     text: String,
