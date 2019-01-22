@@ -51,15 +51,25 @@ controller.viewAllVersions = async(req, res, next) => {
 };
 controller.findByName = async(req, res, next) => {
     try{
+        console.log(req.params.name);
         let name = req.params.name;
-        let recipe = await Recipe.findOne({name});
-        let Allrecipe = await AllRecipes.findOne({history: recipe._id});
-        let length = Allrecipe.history.length;
-        let id = Allrecipe.history[length-1];
-        let recipe1 = await Recipe.findOne({_id: id});
-        res.status(200).json(recipe1);
+        let recipe = await Recipe.findOne({name: name});
+        console.log(recipe);
+        if(recipe) {
+            let Allrecipe = await AllRecipes.findOne({history: recipe._id});
+            let length = Allrecipe.history.length;
+            let id = Allrecipe.history[length - 1];
+            let recipe1 = await Recipe.findOne({_id: id});
+            res.status(200).json(recipe1);
+        }
+        if(name===undefined){
+            next(new ControllerError('Nothing found', 404));
+        }
+        else{
+            next(new ControllerError('Nothing found', 404));
+        }
     }catch(e){
-        next(new ControllerError(e.message, 400))
+        next(new ControllerError(e.message, 400));
     }
 };
 controller.create = async(req, res, next) => {
@@ -134,7 +144,7 @@ controller.delete = async (req, res, next) => {
             await Recipe.findOneAndRemove({_id: item});
         }
         await AllRecipes.findOneAndRemove({history: id});
-        res.status(200).json(recipe);
+        res.status(200).json(recipeWithPhoto);
     }catch (e) {
         next(new ControllerError(e.message, 400));
     }
