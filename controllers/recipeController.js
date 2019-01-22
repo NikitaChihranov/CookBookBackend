@@ -38,12 +38,10 @@ controller.viewAllVersions = async(req, res, next) => {
         for(let recipe of Allrecipes.history){
             ids.push(recipe);
         }
-        console.log(ids);
         for(let id of ids){
             let recipe = await Recipe.findOne({_id: id});
             recipes.push(recipe);
         }
-        console.log(recipes);
         res.status(200).json(recipes);
     }catch(e){
         next(new ControllerError(e.message, 400))
@@ -51,22 +49,25 @@ controller.viewAllVersions = async(req, res, next) => {
 };
 controller.findByName = async(req, res, next) => {
     try{
-        console.log(req.params.name);
-        let name = req.params.name;
-        let recipe = await Recipe.findOne({name: name});
-        console.log(recipe);
-        if(recipe) {
-            let Allrecipe = await AllRecipes.findOne({history: recipe._id});
-            let length = Allrecipe.history.length;
-            let id = Allrecipe.history[length - 1];
-            let recipe1 = await Recipe.findOne({_id: id});
-            res.status(200).json(recipe1);
+        if(req.params == undefined){
+            res.status(200).json(new Recipe({
+                text: 'err'
+            }));
         }
-        if(name===undefined){
-            next(new ControllerError('Nothing found', 404));
-        }
-        else{
-            next(new ControllerError('Nothing found', 404));
+        else {
+            let name = req.params.name;
+            let recipe = await Recipe.findOne({name});
+            if (recipe !== null) {
+                let Allrecipe = await AllRecipes.findOne({history: recipe._id});
+                let length = Allrecipe.history.length;
+                let id = Allrecipe.history[length - 1];
+                let recipe1 = await Recipe.findOne({_id: id});
+                res.status(200).json(recipe1);
+            } else {
+                res.status(200).json(new Recipe({
+                    text: 'err'
+                }));
+            }
         }
     }catch(e){
         next(new ControllerError(e.message, 400));
@@ -81,8 +82,7 @@ controller.create = async(req, res, next) => {
             let createdRecipe = await Recipe.create(req.body);
             let recipe = await AllRecipes.create({});
             recipe.history.push(createdRecipe);
-
-            recipe.save();console.log(recipe);
+            recipe.save();
             res.status(200).json(recipe);
         }
     }catch(e){
