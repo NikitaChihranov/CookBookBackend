@@ -225,7 +225,7 @@ controller.delete = async (req, res, next) => {
         }
     } catch (e) {
         next(new ControllerError(e.message, 400));
-    }x
+    }
 };
 controller.deleteAll = async (req, res, next) => {
     try {
