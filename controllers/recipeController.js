@@ -49,11 +49,6 @@ controller.viewAllVersions = async (req, res, next) => {
 };
 controller.findByName = async (req, res, next) => {
     try {
-        if (req.params == undefined) {
-            res.status(200).json(new Recipe({
-                text: 'err'
-            }));
-        } else {
             let name = req.params.name;
             let recipe = await Recipe.findOne({name});
             if (recipe !== null) {
@@ -63,12 +58,11 @@ controller.findByName = async (req, res, next) => {
                 let recipe1 = await Recipe.findOne({_id: id});
                 res.status(200).json(recipe1);
             } else {
-                res.status(200).json(new Recipe({
+                res.status(201).json(new Recipe({
                     text: 'err'
                 }));
             }
-        }
-    } catch (e) {
+        } catch (e) {
         next(new ControllerError(e.message, 400));
     }
 };
@@ -215,17 +209,23 @@ controller.updatePhoto = async (req, res, next) => {
 controller.delete = async (req, res, next) => {
     try {
         let recipeWithPhoto = await Recipe.findOne({name: req.params.name});
-        let id = recipeWithPhoto._id;
-        fs.unlink('./public/photos/' + recipeWithPhoto.photo, (err) => (err));
-        let allrecipe = await AllRecipes.findOne({history: id});
-        for (let item of allrecipe.history) {
-            await Recipe.findOneAndRemove({_id: item});
+        if(recipeWithPhoto!==null) {
+            let id = recipeWithPhoto._id;
+            fs.unlink('./public/photos/' + recipeWithPhoto.photo, (err) => (err));
+            let allrecipe = await AllRecipes.findOne({history: id});
+            for (let item of allrecipe.history) {
+                await Recipe.findOneAndRemove({_id: item});
+            }
+            await AllRecipes.findOneAndRemove({history: id});
+            res.status(200).json(recipeWithPhoto);
+        }else {
+            res.status(201).json(new Recipe({
+                text: 'err'
+            }));
         }
-        await AllRecipes.findOneAndRemove({history: id});
-        res.status(200).json(recipeWithPhoto);
     } catch (e) {
         next(new ControllerError(e.message, 400));
-    }
+    }x
 };
 controller.deleteAll = async (req, res, next) => {
     try {
